@@ -1,6 +1,7 @@
 from scapy.all import rdpcap
 from scapy.layers.dns import DNS
 from scapy.layers.inet import IP
+import socket
 
 def dns_query_type(qtype):
     """
@@ -37,7 +38,7 @@ def analyze_pcap(file_path):
     - file_path (str): Path to the PCAP file.
 
     Prints:
-    - DNS Query - Source IP: {ip_src}, Destination IP: {ip_dst}, Domain: {query_name}, Type: {query_type}
+     - DNS Query - Source IP: {ip_src}, Destination IP (Target IP): {ip_dst}, Domain: {query_name}, Type: {query_type}, Resolved IP: {resolved_ip}
     """
     packets = rdpcap(file_path)
 
@@ -55,7 +56,13 @@ def analyze_pcap(file_path):
                 query_type_str = dns_query_type(query_type)
                 
                 
-                print(f'DNS Query - Source IP: {ip_src}, Destination IP: {ip_dst}, Domain: {query_name}, Type: {query_type_str}')
+               # Resolve the domain name to its IP address
+                try:
+                    resolved_ip = socket.gethostbyname(query_name)
+                except:
+                    resolved_ip = "N/A"  # If resolution fails, set IP as "Not Available"
+                
+                print(f'DNS Query - Source IP: {ip_src}, Destination IP (Target IP): {ip_dst}, Domain: {query_name}, Type: {query_type_str}, Resolved IP: {resolved_ip}')
 
 pcap_file = 'dnsfile.pcap'
 analyze_pcap(pcap_file)
