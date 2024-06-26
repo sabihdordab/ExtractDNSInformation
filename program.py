@@ -34,12 +34,13 @@ def dns_query_type(qtype):
         return f"Unknown (Type {qtype})"
 
 
-def analyze_pcap(file_path):
+def analyze_pcap(file_path,output_file):
     """
     Analyzes a PCAP file for DNS packets and prints relevant information.
 
     Args:
     - file_path (str): Path to the PCAP file.
+    - output_file (str): Path to the output file to write the results.
 
     Prints:
      - DNS Query - Source IP: {ip_src}, Destination IP (Target IP): {ip_dst}, Domain: {query_name}, Type: {query_type}, Resolved IP: {resolved_ip}
@@ -54,27 +55,31 @@ def analyze_pcap(file_path):
         print(f"Error reading PCAP file: {e}")
         return
 
-    for pkt in packets:
-        if pkt.haslayer(DNS) and pkt.haslayer(IP):
-            ip_src = pkt[IP].src
-            ip_dst = pkt[IP].dst
-            dns_layer = pkt[DNS]
+    with open(output_file, 'w') as f:
+        for pkt in packets:
+            if pkt.haslayer(DNS) and pkt.haslayer(IP):
+                ip_src = pkt[IP].src
+                ip_dst = pkt[IP].dst
+                dns_layer = pkt[DNS]
 
-            # Check if it's a DNS Query (qr == 0) and has at least one question
-            if dns_layer.qr == 0 and dns_layer.qdcount > 0:
-                # Decode the DNS query name from bytes to string
-                query_name = dns_layer.qd.qname.decode('utf-8')
-                query_type = dns_layer.qd.qtype
-                query_type_str = dns_query_type(query_type)
+                if dns_layer.qr == 0 and dns_layer.qdcount > 0:
+                    query_name = dns_layer.qd.qname.decode('utf-8')
+                    query_type = dns_layer.qd.qtype
+                    query_type_str = dns_query_type(query_type)
+                    
+                    try:
+                        resolved_ip = socket.gethostbyname(query_name)
+                    except:
+                        resolved_ip = "N/A"
+                    
+                    dns_query_info = f'DNS Query - Source IP: {ip_src}, Destination IP: {ip_dst}, Domain: {query_name}, Type: {query_type_str}, Resolved IP: {resolved_ip}\n'
+                    f.write(dns_query_info)
                 
-                
-               # Resolve the domain name to its IP address
-                try:
-                    resolved_ip = socket.gethostbyname(query_name)
-                except:
-                    resolved_ip = "N/A"  # If resolution fails, set IP as "Not Available"
-                
-                print(f'DNS Query - Source IP: {ip_src}, Destination IP (Target IP): {ip_dst}, Domain: {query_name}, Type: {query_type_str}, Resolved IP: {resolved_ip}')
+                    #print(f'DNS Query - Source IP: {ip_src}, Destination IP (Target IP): {ip_dst}, Domain: {query_name}, Type: {query_type_str}, Resolved IP: {resolved_ip}')
+                    #print(pkt.show())
+                    #print(pkt.summary())
 
 file_path = input("Enter the path to the PCAP file: ")
-analyze_pcap(file_path)
+output_file = input("Enter the path to the output file: ")
+
+analyze_pcap(file_path, output_file)
