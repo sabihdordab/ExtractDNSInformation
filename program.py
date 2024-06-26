@@ -2,6 +2,7 @@ from scapy.all import rdpcap
 from scapy.layers.dns import DNS
 from scapy.layers.inet import IP
 import socket
+import os
 
 def dns_query_type(qtype):
     """
@@ -27,7 +28,10 @@ def dns_query_type(qtype):
     }
 
     
-    return dns_types[qtype]
+    if qtype in dns_types:
+        return dns_types[qtype]
+    else:
+        return f"Unknown (Type {qtype})"
 
 
 def analyze_pcap(file_path):
@@ -40,13 +44,21 @@ def analyze_pcap(file_path):
     Prints:
      - DNS Query - Source IP: {ip_src}, Destination IP (Target IP): {ip_dst}, Domain: {query_name}, Type: {query_type}, Resolved IP: {resolved_ip}
     """
-    packets = rdpcap(file_path)
+    if not os.path.exists(file_path):
+        print(f"File {file_path} does not exist.")
+        return
+    
+    try:
+        packets = rdpcap(file_path)
+    except Exception as e:
+        print(f"Error reading PCAP file: {e}")
+        return
 
-    for p in packets:
-        if p.haslayer(DNS) and p.haslayer(IP):
-            ip_src = p[IP].src
-            ip_dst = p[IP].dst
-            dns_layer = p[DNS]
+    for pkt in packets:
+        if pkt.haslayer(DNS) and pkt.haslayer(IP):
+            ip_src = pkt[IP].src
+            ip_dst = pkt[IP].dst
+            dns_layer = pkt[DNS]
 
             # Check if it's a DNS Query (qr == 0) and has at least one question
             if dns_layer.qr == 0 and dns_layer.qdcount > 0:
@@ -64,5 +76,5 @@ def analyze_pcap(file_path):
                 
                 print(f'DNS Query - Source IP: {ip_src}, Destination IP (Target IP): {ip_dst}, Domain: {query_name}, Type: {query_type_str}, Resolved IP: {resolved_ip}')
 
-pcap_file = 'dnsfile.pcap'
-analyze_pcap(pcap_file)
+file_path = input("Enter the path to the PCAP file: ")
+analyze_pcap(file_path)
