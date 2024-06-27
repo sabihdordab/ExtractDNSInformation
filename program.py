@@ -62,7 +62,7 @@ def analyze_pcap(file_path,output_file):
                 ip_dst = pkt[IP].dst
                 dns_layer = pkt[DNS]
 
-                if dns_layer.qr == 0 and dns_layer.qdcount > 0:
+                if dns_layer.qr == 0:
                     query_name = dns_layer.qd.qname.decode('utf-8')
                     query_type = dns_layer.qd.qtype
                     query_type_str = dns_query_type(query_type)
