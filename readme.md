@@ -33,7 +33,7 @@ This Python script analyzes a PCAP file to extract DNS query information and wri
      - Enter the path where you want to save the output file (`output_file`).
 
 3. **Output**:
-   - The script will generate an output file (`dns_analysis_results.txt`) containing details of DNS queries found in the PCAP file. Each DNS query is listed in the format:
+   - The script will generate an output file containing details of DNS queries found in the PCAP file. Each DNS query is listed in the format:
 
      ```
      DNS Query - Source IP: <source_ip>, Destination IP: <destination_ip>, Domain: <domain_name>, Type: <query_type>, Resolved IP: <resolved_ip>
